@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 import re
@@ -41,10 +41,10 @@ class CommandRateLimiter:
             user_hits.popleft()
 
         if user_hits and now - user_hits[-1] < settings.command_cooldown_seconds:
-            return False, f"명령어를 너무 빠르게 호출하고 있습니다. {settings.command_cooldown_seconds}초 후 다시 시도해 주세요."
+            return False, f"紐낅졊?대? ?덈Т 鍮좊Ⅴ寃??몄텧?섍퀬 ?덉뒿?덈떎. {settings.command_cooldown_seconds}珥????ㅼ떆 ?쒕룄??二쇱꽭??"
 
         if len(user_hits) >= settings.command_max_per_window:
-            return False, "요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요."
+            return False, "?붿껌 ?쒕룄瑜?珥덇낵?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??"
 
         user_hits.append(now)
         return True, None
@@ -200,12 +200,12 @@ def _sanitize_repo_relative_path(path: str) -> Path:
 async def _is_valid_private_thread_context(interaction: discord.Interaction) -> tuple[bool, str | None]:
     channel = interaction.channel
     if not isinstance(channel, discord.Thread) or not channel.is_private():
-        return False, "모든 명령은 개인 쓰레드에서만 실행할 수 있습니다. 먼저 `/open_thread`를 사용해 주세요."
+        return False, "紐⑤뱺 紐낅졊? 媛쒖씤 ?곕젅?쒖뿉?쒕쭔 ?ㅽ뻾?????덉뒿?덈떎. 癒쇱? `/open_thread`瑜??ъ슜??二쇱꽭??"
     if channel.parent_id != settings.thread_parent_channel_id:
-        return False, "허용된 명령 쓰레드가 아닙니다. 지정된 부모 채널에서 생성한 쓰레드에서 실행해 주세요."
+        return False, "?덉슜??紐낅졊 ?곕젅?쒓? ?꾨떃?덈떎. 吏?뺣맂 遺紐?梨꾨꼸?먯꽌 ?앹꽦???곕젅?쒖뿉???ㅽ뻾??二쇱꽭??"
 
     if not thread_access_manager.is_managed_thread(channel.id):
-        return False, "Nota가 관리하는 개인 쓰레드가 아닙니다. `/open_thread`로 생성한 쓰레드에서 실행해 주세요."
+        return False, "Nota媛 愿由ы븯??媛쒖씤 ?곕젅?쒓? ?꾨떃?덈떎. `/open_thread`濡??앹꽦???곕젅?쒖뿉???ㅽ뻾??二쇱꽭??"
 
     if interaction.user.id in settings.admin_user_ids:
         return True, None
@@ -213,7 +213,7 @@ async def _is_valid_private_thread_context(interaction: discord.Interaction) -> 
     try:
         await channel.fetch_member(interaction.user.id)
     except discord.NotFound:
-        return False, "이 쓰레드의 참여자만 명령어를 실행할 수 있습니다."
+        return False, "???곕젅?쒖쓽 李몄뿬?먮쭔 紐낅졊?대? ?ㅽ뻾?????덉뒿?덈떎."
 
     return True, None
 
@@ -271,7 +271,7 @@ async def enforce_rbac(interaction: discord.Interaction) -> bool:
     role = _resolve_access_role(interaction)
     if role in allowed:
         return True
-    reason = f"권한 부족: `{interaction.command.name}` 명령은 owner만 실행할 수 있습니다."
+    reason = f"沅뚰븳 遺議? `{interaction.command.name}` 紐낅졊? owner留??ㅽ뻾?????덉뒿?덈떎."
     if interaction.response.is_done():
         await interaction.followup.send(reason, ephemeral=True)
     else:
@@ -307,6 +307,7 @@ def _parse_ymd_to_ts(raw: str | None, *, end_of_day: bool = False) -> float | No
         return parsed.timestamp() + 86399
     return parsed.timestamp()
 
+
 @bot.event
 async def on_ready() -> None:
     await tree.sync()
@@ -327,11 +328,11 @@ async def setup(interaction: discord.Interaction, github_username: str | None = 
         repo_full_name = github_manager.create_workspace_for_user(interaction.user.id, github_username)
     except WorkspaceProvisionError as exc:
         _audit_log(interaction, "failed", f"setup: {exc}")
-        await interaction.followup.send(f"워크스페이스 설정 실패: {exc}")
+        await interaction.followup.send(f"?뚰겕?ㅽ럹?댁뒪 ?ㅼ젙 ?ㅽ뙣: {exc}")
         return
 
     _audit_log(interaction, "success", "setup")
-    await interaction.followup.send(f"워크스페이스 설정 완료: `https://github.com/{repo_full_name}`")
+    await interaction.followup.send(f"?뚰겕?ㅽ럹?댁뒪 ?ㅼ젙 ?꾨즺: `https://github.com/{repo_full_name}`")
 
 
 @tree.command(name="invite", description="Invite a collaborator into your workspace repository.")
@@ -348,12 +349,12 @@ async def invite(interaction: discord.Interaction, github_username: str) -> None
         repo_full_name = github_manager.invite_collaborator(interaction.user.id, github_username)
     except WorkspaceProvisionError as exc:
         _audit_log(interaction, "failed", f"invite: {exc}")
-        await interaction.followup.send(f"협업자 초대 실패: {exc}")
+        await interaction.followup.send(f"?묒뾽??珥덈? ?ㅽ뙣: {exc}")
         return
     _audit_log(interaction, "success", "invite")
     await interaction.followup.send(
-        f"`{github_username}` 님을 `{repo_full_name}` 저장소 Collaborator로 초대했습니다.\n"
-        "GitHub 초대 수락 전까지는 권한이 활성화되지 않습니다.",
+        f"`{github_username}` ?섏쓣 `{repo_full_name}` ??μ냼 Collaborator濡?珥덈??덉뒿?덈떎.\n"
+        "GitHub 珥덈? ?섎씫 ?꾧퉴吏??沅뚰븳???쒖꽦?붾릺吏 ?딆뒿?덈떎.",
     )
 
 
@@ -361,9 +362,9 @@ async def invite(interaction: discord.Interaction, github_username: str) -> None
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
     original = getattr(error, "original", error)
     if isinstance(original, ValueError) and "run /setup first" in str(original):
-        message = "워크스페이스가 아직 설정되지 않았습니다. `/setup` 을 먼저 실행해 주세요."
+        message = "?뚰겕?ㅽ럹?댁뒪媛 ?꾩쭅 ?ㅼ젙?섏? ?딆븯?듬땲?? `/setup` ??癒쇱? ?ㅽ뻾??二쇱꽭??"
     else:
-        message = "요청 처리 중 오류가 발생했습니다. 관리자에게 문의해 주세요."
+        message = "?붿껌 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. 愿由ъ옄?먭쾶 臾몄쓽??二쇱꽭??"
 
     _audit_log(interaction, "error", f"{type(original).__name__}: {original}")
 
@@ -393,11 +394,11 @@ async def add(interaction: discord.Interaction, source_type: str, source: str) -
             author_name=f"discord-{uid}",
             author_email=f"discord-{uid}@nota.local",
         ) as repo_dir:
-            action = "생성"
+            action = "?앹꽦"
             if source_type == "youtube":
                 md = kb.youtube_to_markdown(source)
                 target = repo_dir / "sources" / "youtube" / f"{source.split('=')[-1]}.md"
-                reason = "유튜브 콘텐츠 동기화"
+                reason = "Ingested YouTube transcript"
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(md, encoding="utf-8")
                 report_path = str(target.relative_to(repo_dir))
@@ -405,35 +406,38 @@ async def add(interaction: discord.Interaction, source_type: str, source: str) -
                 md = kb.web_to_markdown(source)
                 filename = source.replace("https://", "").replace("http://", "").replace("/", "_")
                 target = repo_dir / "sources" / "web" / f"{filename}.md"
-                reason = "웹페이지 지식 수집"
+                reason = "?뱁럹?댁? 吏???섏쭛"
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(md, encoding="utf-8")
                 report_path = str(target.relative_to(repo_dir))
             elif source_type == "file":
-                raise ValueError("보안 정책상 서버 로컬 파일 경로 입력은 허용되지 않습니다. 저장소 파일은 source_type=repo를 사용해 주세요.")
+                raise ValueError("蹂댁븞 ?뺤콉???쒕쾭 濡쒖뺄 ?뚯씪 寃쎈줈 ?낅젰? ?덉슜?섏? ?딆뒿?덈떎. ??μ냼 ?뚯씪? source_type=repo瑜??ъ슜??二쇱꽭??")
             elif source_type == "repo":
                 safe_rel = _sanitize_repo_relative_path(source)
                 repo_target = repo_dir / safe_rel
                 if not repo_target.exists() or not repo_target.is_file():
-                    raise ValueError("저장소 내부 파일 경로를 찾지 못했습니다.")
-                reason = "저장소 내부 파일 RAG 인덱싱"
-                action = "수정"
+                    raise ValueError("??μ냼 ?대? ?뚯씪 寃쎈줈瑜?李얠? 紐삵뻽?듬땲??")
+                reason = "Indexed repository file for RAG"
+                action = "update"
                 report_path = str(repo_target.relative_to(repo_dir))
             else:
-                raise ValueError("source_type은 youtube/web/file/repo 중 하나여야 합니다.")
+                raise ValueError("source_type? youtube/web/file/repo 以??섎굹?ъ빞 ?⑸땲??")
 
             report = build_change_report(uid, report_path, reason, action)
             stats = kb.index_markdown_files(uid, repo_dir)
             return (
                 f"{report}\n"
-                f"증분 인덱싱 결과: chunk={stats.total_chunks}, 변경파일={stats.indexed_files}, "
-                f"스킵파일={stats.skipped_files}, 삭제파일={stats.deleted_files}"
+                f"利앸텇 ?몃뜳??寃곌낵: chunk={stats.total_chunks}, 蹂寃쏀뙆??{stats.indexed_files}, "
+                f"?ㅽ궢?뚯씪={stats.skipped_files}, ??젣?뚯씪={stats.deleted_files}"
             )
 
     await interaction.response.defer()
     job_id = job_queue.enqueue(user_id=uid, thread_id=thread_id, command="add", handler=handler)
     _audit_log(interaction, "queued", f"add job_id={job_id}")
-    await interaction.followup.send(f"/add 작업을 큐에 등록했습니다. job_id=`{job_id}`\n`/job_status {job_id}`로 상태를 확인하세요.")
+    await interaction.followup.send(
+        f"/add 작업을 큐에 등록했습니다. job_id=`{job_id}`\n"
+        f"`/job_status {job_id}`로 상태를 확인하세요."
+    )
 
 
 @tree.command(name="chat", description="Chat with the assistant.")
@@ -495,12 +499,18 @@ async def summarize_all(interaction: discord.Interaction) -> None:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(content, encoding="utf-8")
             stats = kb.index_markdown_files(uid, repo_dir)
-        return "README/기술백서/학습가이드 자동 생성 완료. " f"(증분 인덱싱 변경파일 {stats.indexed_files}개)"
+        return (
+            "README/기술백서/학습가이드 자동 생성 완료. "
+            f"(증분 인덱싱 변경파일 {stats.indexed_files}개)"
+        )
 
     await interaction.response.defer()
     job_id = job_queue.enqueue(user_id=uid, thread_id=thread_id, command="summarize_all", handler=handler)
     _audit_log(interaction, "queued", f"summarize_all job_id={job_id}")
-    await interaction.followup.send(f"/summarize_all 작업을 큐에 등록했습니다. job_id=`{job_id}`\n`/job_status {job_id}`로 상태를 확인하세요.")
+    await interaction.followup.send(
+        f"/summarize_all 작업을 큐에 등록했습니다. job_id=`{job_id}`\n"
+        f"`/job_status {job_id}`로 상태를 확인하세요."
+    )
 
 
 @tree.command(name="analyze_update", description="Analyze a repo file and update docs automatically.")
@@ -519,7 +529,7 @@ async def analyze_update(interaction: discord.Interaction, path: str, instructio
     def handler() -> str:
         mapping = github_manager.get_mapping(uid)
         if not mapping:
-            raise ValueError("워크스페이스가 없습니다. 먼저 /setup을 실행해 주세요.")
+            raise ValueError("?뚰겕?ㅽ럹?댁뒪媛 ?놁뒿?덈떎. 癒쇱? /setup???ㅽ뻾??二쇱꽭??")
 
         with github_manager.cloned_repo(
             uid,
@@ -530,20 +540,23 @@ async def analyze_update(interaction: discord.Interaction, path: str, instructio
             safe_rel = _sanitize_repo_relative_path(path)
             target = repo_dir / safe_rel
             if not target.exists() or not target.is_file():
-                raise ValueError("대상 파일이 존재하지 않습니다.")
+                raise ValueError("????뚯씪??議댁옱?섏? ?딆뒿?덈떎.")
             source = target.read_text(encoding="utf-8", errors="ignore")
-            prompt = f"파일 `{safe_rel}` 분석 결과를 문서로 정리해줘. 요청사항: {instruction}"
-            synthesized, _ = kb.answer_with_lm_studio(uid, f"{prompt}\n\n소스:\n{source[:4000]}", mapping.github_repo_full_name)
+            prompt = f"?뚯씪 `{safe_rel}` 遺꾩꽍 寃곌낵瑜?臾몄꽌濡??뺣━?댁쨾. ?붿껌?ы빆: {instruction}"
+            synthesized, _ = kb.answer_with_lm_studio(uid, f"{prompt}\n\n?뚯뒪:\n{source[:4000]}", mapping.github_repo_full_name)
             out = repo_dir / "docs" / "AUTO_ANALYSIS.md"
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(f"# Automated Analysis\n\n{synthesized}\n", encoding="utf-8")
             stats = kb.index_markdown_files(uid, repo_dir)
-        return f"문서 업데이트 완료: docs/AUTO_ANALYSIS.md (변경파일 {stats.indexed_files}개 인덱싱)"
+        return f"臾몄꽌 ?낅뜲?댄듃 ?꾨즺: docs/AUTO_ANALYSIS.md (蹂寃쏀뙆??{stats.indexed_files}媛??몃뜳??"
 
     await interaction.response.defer()
     job_id = job_queue.enqueue(user_id=uid, thread_id=thread_id, command="analyze_update", handler=handler)
     _audit_log(interaction, "queued", f"analyze_update job_id={job_id}")
-    await interaction.followup.send(f"/analyze_update 작업을 큐에 등록했습니다. job_id=`{job_id}`\n`/job_status {job_id}`로 상태를 확인하세요.")
+    await interaction.followup.send(
+        f"/analyze_update 작업을 큐에 등록했습니다. job_id=`{job_id}`\n"
+        f"`/job_status {job_id}`로 상태를 확인하세요."
+    )
 
 
 @tree.command(name="list", description="List files in your GitHub workspace.")
@@ -643,7 +656,7 @@ async def edit(interaction: discord.Interaction, path: str, new_content: str) ->
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(new_content, encoding="utf-8")
         kb.index_markdown_files(uid, repo_dir)
-    report = build_change_report(uid, str(safe_rel), "사용자 직접 편집 요청", "수정")
+    report = build_change_report(uid, str(safe_rel), "?ъ슜??吏곸젒 ?몄쭛 ?붿껌", "?섏젙")
     _audit_log(interaction, "success", "edit")
     await interaction.followup.send(report)
 
@@ -671,11 +684,11 @@ async def delete(interaction: discord.Interaction, path: str) -> None:
         kb.reset_user_index(uid)
         with github_manager.cloned_repo(uid) as repo_dir:
             kb.index_markdown_files(uid, repo_dir)
-        report = build_change_report(uid, str(safe_rel), "사용자 삭제 요청", "삭제")
+        report = build_change_report(uid, str(safe_rel), "?ъ슜????젣 ?붿껌", "??젣")
         _audit_log(interaction, "success", "delete")
         await interaction.followup.send(report)
     else:
-        await interaction.followup.send("대상 파일을 찾지 못했습니다.")
+        await interaction.followup.send("????뚯씪??李얠? 紐삵뻽?듬땲??")
 
 
 @tree.command(name="reset", description="Delete all repo files and reset local vector index.")
@@ -698,19 +711,19 @@ async def reset(interaction: discord.Interaction) -> None:
             f.unlink()
     kb.reset_user_index(uid)
     _audit_log(interaction, "success", "reset")
-    await interaction.followup.send("환경 초기화 완료: GitHub 파일과 로컬 인덱스를 정리했습니다.")
+    await interaction.followup.send("?섍꼍 珥덇린???꾨즺: GitHub ?뚯씪怨?濡쒖뺄 ?몃뜳?ㅻ? ?뺣━?덉뒿?덈떎.")
 
 
 @tree.command(name="open_thread", description="Create your private Nota command thread.")
 @app_commands.describe(collaborators="Optional collaborator mentions/IDs (comma separated)")
 async def open_thread(interaction: discord.Interaction, collaborators: str | None = None) -> None:
     if not interaction.guild:
-        await interaction.response.send_message("이 명령은 서버에서만 사용할 수 있습니다.", ephemeral=True)
+        await interaction.response.send_message("??紐낅졊? ?쒕쾭?먯꽌留??ъ슜?????덉뒿?덈떎.", ephemeral=True)
         return
 
     if interaction.channel_id != settings.thread_parent_channel_id:
         await interaction.response.send_message(
-            "이 명령은 지정된 채널에서만 실행할 수 있습니다.",
+            "??紐낅졊? 吏?뺣맂 梨꾨꼸?먯꽌留??ㅽ뻾?????덉뒿?덈떎.",
             ephemeral=True,
         )
         return
@@ -723,12 +736,12 @@ async def open_thread(interaction: discord.Interaction, collaborators: str | Non
     if existing_thread_id:
         thread = interaction.guild.get_thread(existing_thread_id)
         if thread:
-            await interaction.followup.send(f"이미 개인 쓰레드가 있습니다: {thread.mention}", ephemeral=True)
+            await interaction.followup.send(f"?대? 媛쒖씤 ?곕젅?쒓? ?덉뒿?덈떎: {thread.mention}", ephemeral=True)
             return
 
     parent_channel = interaction.guild.get_channel(settings.thread_parent_channel_id)
     if not isinstance(parent_channel, discord.TextChannel):
-        await interaction.followup.send("부모 채널이 텍스트 채널이 아닙니다. 환경 변수를 확인해 주세요.", ephemeral=True)
+        await interaction.followup.send("遺紐?梨꾨꼸???띿뒪??梨꾨꼸???꾨떃?덈떎. ?섍꼍 蹂?섎? ?뺤씤??二쇱꽭??", ephemeral=True)
         return
 
     thread = await parent_channel.create_thread(
@@ -750,9 +763,10 @@ async def open_thread(interaction: discord.Interaction, collaborators: str | Non
     thread_access_manager.upsert(interaction.user.id, interaction.guild.id, thread.id)
     thread_role_manager.set_roles(thread.id, interaction.user.id, member_ids)
     _audit_log(interaction, "success", "open_thread")
-    await interaction.followup.send(f"개인 쓰레드를 생성했습니다: {thread.mention}", ephemeral=True)
+    await interaction.followup.send(f"媛쒖씤 ?곕젅?쒕? ?앹꽦?덉뒿?덈떎: {thread.mention}", ephemeral=True)
 
 
 if __name__ == "__main__":
     settings.validate()
     bot.run(settings.discord_token)
+

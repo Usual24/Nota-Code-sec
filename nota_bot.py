@@ -436,23 +436,13 @@ async def add(interaction: discord.Interaction, source_type: str, source: str) -
     await interaction.followup.send(f"/add 작업을 큐에 등록했습니다. job_id=`{job_id}`\n`/job_status {job_id}`로 상태를 확인하세요.")
 
 
-@tree.command(name="chat", description="Ask questions against your indexed knowledge base.")
+@tree.command(name="chat", description="Chat with the assistant.")
 @app_commands.describe(
     question="Your question",
-    source_type="Optional source filter (web|youtube|repo)",
-    path_prefix="Optional path prefix filter (e.g. sources/web)",
-    from_date="Optional YYYY-MM-DD",
-    to_date="Optional YYYY-MM-DD",
-    topk="Top-k contexts (1-20)",
 )
 async def chat(
     interaction: discord.Interaction,
     question: str,
-    source_type: str | None = None,
-    path_prefix: str | None = None,
-    from_date: str | None = None,
-    to_date: str | None = None,
-    topk: app_commands.Range[int, 1, 20] = 8,
 ) -> None:
     if not await ensure_thread_context(interaction):
         return
@@ -461,34 +451,19 @@ async def chat(
     if not await enforce_rate_limit(interaction):
         return
     await interaction.response.defer()
-    mapping = github_manager.get_mapping(interaction.user.id)
-    answer, contexts = kb.answer_with_lm_studio(
+    answer, contexts = kb.answer_with_lm_studio_clean(
         interaction.user.id,
         question,
-        mapping.github_repo_full_name if mapping else None,
-        topk=int(topk),
-        path_prefix=path_prefix,
-        source_type=source_type,
-        since_ts=_parse_ymd_to_ts(from_date),
-        until_ts=_parse_ymd_to_ts(to_date, end_of_day=True),
     )
 
-    embed = discord.Embed(title="Nota Synthesis Answer", description=answer[:3900], color=0x4F46E5)
-    embed.add_field(name="질문", value=question[:1024], inline=False)
+    embed = discord.Embed(title="Nota Chat", description=answer[:3900], color=0x4F46E5)
+    embed.add_field(name="Question", value=question[:1024], inline=False)
     if contexts:
         top = contexts[0]
-        embed.add_field(name="대표 근거", value=f"{top['path']}:{top['start_line']}-{top['end_line']}", inline=False)
+        embed.add_field(name="Top Source", value=f"{top['path']}:{top['start_line']}-{top['end_line']}", inline=False)
 
-    view = discord.ui.View()
-    if mapping:
-        for context in contexts[:3]:
-            url = (
-                f"https://github.com/{mapping.github_repo_full_name}/blob/{settings.default_branch}/"
-                f"{context['path']}#L{context['start_line']}-L{context['end_line']}"
-            )
-            view.add_item(discord.ui.Button(label=f"{Path(context['path']).name}", url=url))
     _audit_log(interaction, "success", "chat")
-    await interaction.followup.send(embed=embed, view=view)
+    await interaction.followup.send(embed=embed)
 
 
 @tree.command(name="summarize_all", description="Generate README/whitepaper/learning guide from whole knowledge base.")

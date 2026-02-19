@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sqlite3
 import threading
 import time
@@ -86,13 +87,21 @@ class JobQueueService:
         return job_id
 
     def _run_job(self, job_id: str, handler: Callable[[], str]) -> None:
-        self._update(job_id, state="running", detail="작업 실행 중")
+        self._update(job_id, state="running", detail="?묒뾽 ?ㅽ뻾 以?)
         try:
             result = handler()
-            self._update(job_id, state="completed", detail="작업 완료", result=result)
+            self._update(job_id, state="completed", detail="?묒뾽 ?꾨즺", result=result)
         except Exception as exc:  # noqa: BLE001
-            self._update(job_id, state="failed", detail=f"작업 실패: {type(exc).__name__}", result=str(exc))
+            self._update(job_id, state="failed", detail=f"?묒뾽 ?ㅽ뙣: {type(exc).__name__}", result=self._redact_paths(str(exc)))
 
+    @staticmethod
+    def _redact_paths(message: str) -> str:
+        if not message:
+            return message
+        # Redact absolute filesystem paths to avoid path disclosure/injection.
+        message = re.sub(r\"[A-Za-z]:\\\\[^\r\n\\\"']+\", \"<redacted-path>\", message)
+        message = re.sub(r\"/[^\\s\\\"'\r\n]+\", \"<redacted-path>\", message)
+        return message
     def _update(self, job_id: str, *, state: str, detail: str, result: str | None = None) -> None:
         now = time.time()
         with self._db_lock:

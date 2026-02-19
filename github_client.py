@@ -137,8 +137,10 @@ class GithubWorkspaceManager:
             raise ValueError("User workspace is not configured. Please run /setup first.")
 
         tmp_dir = Path(tempfile.mkdtemp(prefix="nota-repo-"))
-        askpass_file = tmp_dir / ".askpass.sh"
+        askpass_fd, askpass_path = tempfile.mkstemp(prefix="nota-askpass-", suffix=".sh")
+        askpass_file = Path(askpass_path)
         try:
+            os.close(askpass_fd)
             askpass_file.write_text(
                 "#!/usr/bin/env bash\n"
                 "case \"$1\" in\n"
@@ -166,6 +168,10 @@ class GithubWorkspaceManager:
                 repo.remote("origin").push(settings.default_branch, env=git_env)
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
+            try:
+                askpass_file.unlink()
+            except FileNotFoundError:
+                pass
 
     def list_files(self, discord_user_id: int) -> list[str]:
         with self.cloned_repo(discord_user_id) as repo_dir:

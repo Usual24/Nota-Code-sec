@@ -37,6 +37,10 @@ class Settings:
     lm_studio_context_window: int = field(default_factory=lambda: int(os.getenv("LM_STUDIO_CONTEXT_WINDOW", "2048")))
     lm_studio_reserved_tokens: int = field(default_factory=lambda: int(os.getenv("LM_STUDIO_RESERVED_TOKENS", "512")))
     lm_studio_chars_per_token: float = field(default_factory=lambda: float(os.getenv("LM_STUDIO_CHARS_PER_TOKEN", "3.0")))
+    llm_provider: str = field(default_factory=lambda: os.getenv("NOTA_LLM_PROVIDER", "lmstudio").strip().lower())
+    groq_api_key: str = field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
+    groq_base_url: str = field(default_factory=lambda: os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1"))
+    groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"))
 
     default_branch: str = field(default_factory=lambda: os.getenv("DEFAULT_BRANCH", "main"))
     thread_parent_channel_id: int = field(default_factory=lambda: int(os.getenv("NOTA_THREAD_PARENT_CHANNEL_ID", "0")))
@@ -65,6 +69,11 @@ class Settings:
 
     def validate(self) -> None:
         missing = []
+        provider = self.llm_provider.strip().lower()
+        if provider not in {"lmstudio", "groq"}:
+            missing.append("NOTA_LLM_PROVIDER(lmstudio|groq)")
+        if provider == "groq" and not self.groq_api_key:
+            missing.append("GROQ_API_KEY")
         if not self.discord_token:
             missing.append("DISCORD_TOKEN")
         if not self.github_token:

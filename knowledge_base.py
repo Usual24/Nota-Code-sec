@@ -204,7 +204,7 @@ class KnowledgeBaseService:
             "Every sentence must include a citation in the form [path:start-end]."
         )
         payload = {
-            "model": settings.lm_studio_model,
+            "model": _active_chat_model(),
             "messages": [
                 {
                     "role": "system",
@@ -257,7 +257,7 @@ class KnowledgeBaseService:
             "Do not mention citations or source file paths."
         )
         payload = {
-            "model": settings.lm_studio_model,
+            "model": _active_chat_model(),
             "messages": [
                 {
                     "role": "system",
@@ -469,6 +469,9 @@ def _append_hyperlink_sources(answer: str, contexts: list[dict], repo_full_name:
 
 
 def _call_lm_studio_chat(payload: dict) -> dict:
+    if settings.llm_provider == "groq":
+        return _call_groq_chat(payload)
+
     resolved_payload = dict(payload)
     resolved_payload["model"] = _resolve_lm_studio_model(str(payload.get("model", settings.lm_studio_model)))
     endpoint = urljoin(f"{settings.lm_studio_base_url.rstrip('/')}/", "chat/completions")
@@ -479,6 +482,31 @@ def _call_lm_studio_chat(payload: dict) -> dict:
     except Exception as exc:
         logger.exception(
             "LM Studio request failed: endpoint=%s model=%s error=%s",
+            endpoint,
+            resolved_payload.get("model"),
+            exc,
+        )
+        raise
+
+
+def _call_groq_chat(payload: dict) -> dict:
+    if not settings.groq_api_key:
+        raise LMStudioError("GROQ_API_KEY is missing")
+
+    resolved_payload = dict(payload)
+    resolved_payload["model"] = str(payload.get("model", settings.groq_model)) or settings.groq_model
+    endpoint = urljoin(f"{settings.groq_base_url.rstrip('/')}/", "chat/completions")
+    headers = {
+        "Authorization": f"Bearer {settings.groq_api_key}",
+        "Content-Type": "application/json",
+    }
+    try:
+        resp = requests.post(endpoint, json=resolved_payload, headers=headers, timeout=60)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as exc:
+        logger.exception(
+            "Groq request failed: endpoint=%s model=%s error=%s",
             endpoint,
             resolved_payload.get("model"),
             exc,
@@ -506,7 +534,7 @@ def _resolve_lm_studio_model(preferred_model: str) -> str:
 
 def _answer_direct_with_lm_studio(question: str) -> str:
     payload = {
-        "model": settings.lm_studio_model,
+        "model": _active_chat_model(),
         "messages": [
             {
                 "role": "system",
@@ -543,6 +571,12 @@ def _validate_external_web_url(url: str) -> None:
     for ip in resolved:
         if _is_private_or_internal_ip(ip):
             raise ValueError("Private/internal IPs are not allowed.")
+
+
+def _active_chat_model() -> str:
+    if settings.llm_provider == "groq":
+        return settings.groq_model
+    return settings.lm_studio_model
 
 
 def _safe_resolve_ips(host: str) -> set[str]:

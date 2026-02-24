@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import logging
+import argparse
 import re
 import sqlite3
 import time
@@ -767,6 +768,20 @@ async def open_thread(interaction: discord.Interaction, collaborators: str | Non
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run Nota Discord bot")
+    parser.add_argument(
+        "--groq",
+        action="store_true",
+        help="Use Groq OpenAI-compatible API instead of LM Studio",
+    )
+    args = parser.parse_args()
+
+    if args.groq:
+        settings.llm_provider = "groq"
+    else:
+        settings.llm_provider = "lmstudio"
+
     settings.validate()
+    logger.info("Starting Nota bot with LLM provider: %s", settings.llm_provider)
     bot.run(settings.discord_token)
 

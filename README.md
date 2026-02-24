@@ -1,6 +1,6 @@
 ﻿# Nota Code
 
-Discord-based personal knowledge workspace with GitHub-backed storage, Chroma vector indexing, and LM Studio-powered RAG answers.
+Discord-based personal knowledge workspace with GitHub-backed storage, Chroma vector indexing, and RAG answers via LM Studio (default) or Groq (`--groq`).
 
 ## What It Does
 - Creates a private per-user workspace thread in Discord.
@@ -23,6 +23,7 @@ Discord-based personal knowledge workspace with GitHub-backed storage, Chroma ve
 - Discord bot token
 - GitHub token (repo access)
 - LM Studio running locally (OpenAI-compatible API)
+- Optional: Groq API key when using `--groq`
 
 ## Installation
 ```bash
@@ -54,6 +55,11 @@ LM_STUDIO_CONTEXT_WINDOW=2048
 LM_STUDIO_RESERVED_TOKENS=512
 LM_STUDIO_CHARS_PER_TOKEN=3.0
 
+# Optional when running with --groq
+GROQ_API_KEY=
+GROQ_BASE_URL=https://api.groq.com/openai/v1
+GROQ_MODEL=llama-3.3-70b-versatile
+
 NOTA_ADMIN_USER_IDS=
 NOTA_ALLOWED_LOCAL_FILE_EXTENSIONS=txt,json,pdf
 NOTA_LOCAL_FILE_MAX_BYTES=3145728
@@ -68,6 +74,9 @@ NOTA_COMMAND_MAX_PER_WINDOW=12
 ## Run
 ```bash
 python nota_bot.py
+
+# Use Groq API instead of LM Studio
+python nota_bot.py --groq
 ```
 
 ## Discord Commands
@@ -88,8 +97,8 @@ python nota_bot.py
 ## RAG Response Flow
 1. User asks `/chat`.
 2. Top-k relevant chunks are retrieved from Chroma.
-3. Retrieved context is injected into LM Studio chat prompt.
-4. LM Studio generates final answer based on question + context.
+3. Retrieved context is injected into the selected LLM chat prompt.
+4. LM Studio (default) or Groq (`--groq`) generates final answer based on question + context.
 
 ## Security Model
 - Commands run only inside managed private threads (except thread creation).
@@ -105,5 +114,5 @@ python nota_bot.py
 - `data/index_hash_state.json`: incremental indexing state.
 
 ## Notes
-- If LM Studio is unavailable, chat/doc generation returns an availability error.
+- If the selected LLM endpoint is unavailable, chat/doc generation returns an availability error.
 - For best results, run `/add` first to build enough context before `/chat`.
